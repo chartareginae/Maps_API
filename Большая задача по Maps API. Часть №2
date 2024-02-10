@@ -7,7 +7,18 @@ coords = input("Введите координаты (широта и долго�
 scale = float(input("Введите коэффициент масштабирования: "))
 zoom_in_factor = float(input("Введите коэффициент увеличения масштаба: "))
 zoom_out_factor = float(input("Введите коэффициент уменьшения масштаба: "))
-map_request = f"http://static-maps.yandex.ru/1.x/?ll={coords[0]},{coords[1]}&spn={scale},{scale}&l=map"
+map_type = "map"
+map_types = ["map", "sat", "sat,skl"]
+map_index = 0
+
+def switch_map_type():
+    global map_type, map_index
+    map_index = (map_index + 1) % len(map_types)
+    map_type = map_types[map_index]
+
+switch_map_type()
+
+map_request = f"http://static-maps.yandex.ru/1.x/?ll={coords[0]},{coords[1]}&spn={scale},{scale}&l={map_type}"
 
 response = requests.get(map_request)
 if not response:
@@ -33,12 +44,15 @@ while running:
                 scale *= zoom_in_factor
             elif event.key == pygame.K_PAGEDOWN:
                 scale /= zoom_out_factor
+            elif event.key == pygame.K_t:
+                switch_map_type()
+
             if scale < 0.0001:
                 scale = 0.0001
             elif scale > 100:
                 scale = 100
 
-            map_request = f"http://static-maps.yandex.ru/1.x/?ll={coords[0]},{coords[1]}&spn={scale},{scale}&l=map"
+            map_request = f"http://static-maps.yandex.ru/1.x/?ll={coords[0]},{coords[1]}&spn={scale},{scale}&l={map_type}"
             response = requests.get(map_request)
             if not response:
                 print("Ошибка выполнения запроса:")
