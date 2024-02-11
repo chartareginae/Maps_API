@@ -1,18 +1,11 @@
 import os
-import sys
 import pygame
 import requests
 
 coords = input().split()
 scale = input()
 map_request = f"http://static-maps.yandex.ru/1.x/?ll={coords[0]},{coords[1]}&spn={scale},{scale}&l=map"
-
 response = requests.get(map_request)
-if not response:
-    print("Ошибка выполнения запроса:")
-    print(map_request)
-    print("Http статус:", response.status_code, "(", response.reason, ")")
-    sys.exit(1)
 map_file = "map.png"
 with open(map_file, "wb") as file:
     file.write(response.content)
@@ -20,7 +13,33 @@ pygame.init()
 screen = pygame.display.set_mode((600, 450))
 screen.blit(pygame.image.load(map_file), (0, 0))
 pygame.display.flip()
-while pygame.event.wait().type != pygame.QUIT:
-    pass
+running = True
+flag = False
+while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            quit()
+        if event.type == pygame.KEYDOWN:
+            flag = True
+            li = event.key
+        if event.type == pygame.KEYUP:
+            flag = False
+    if flag:
+        if li == pygame.K_RIGHT:
+            coords[0] = str(float(coords[0]) + 0.05)
+        if li == pygame.K_LEFT:
+            coords[0] = str(float(coords[0]) - 0.05)
+        if li == pygame.K_UP:
+            coords[1] = str(float(coords[1]) + 0.05)
+        if li == pygame.K_DOWN:
+            coords[1] = str(float(coords[1]) - 0.05)
+    map_request = f"http://static-maps.yandex.ru/1.x/?ll={coords[0]},{coords[1]}&spn={scale},{scale}&l=map"
+    response = requests.get(map_request)
+    map_file = "map.png"
+    with open(map_file, "wb") as file:
+        file.write(response.content)
+    screen.blit(pygame.image.load(map_file), (0, 0))
+    pygame.display.flip()
+
 pygame.quit()
 os.remove(map_file)
