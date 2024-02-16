@@ -39,7 +39,7 @@ while running:
             elif scale > 100:
                 scale = 100
 
-            map_request = f"http://static-maps.yandex.ru/1.x/?ll={coords[0]},{coords[1]}&spn={scale},{scale}&l={map_type}"
+            map_request = f"http://static-maps.yandex.ru/1.x/?ll={coords[0]},{coords[1]}&spn={scale},{scale}&l=map"
             response = requests.get(map_request)
             if not response:
                 print("Ошибка выполнения запроса:")
