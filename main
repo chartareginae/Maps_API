@@ -1,10 +1,12 @@
 import os
-import sys
 import pygame
 import requests
+import sys
 
-coords = input().split()
-scale = input()
+coords = input("Введите координаты (широта и долгота через пробел): ").split()
+scale = float(input("Введите коэффициент масштабирования: "))
+zoom_in_factor = float(input("Введите коэффициент увеличения масштаба: "))
+zoom_out_factor = float(input("Введите коэффициент уменьшения масштаба: "))
 map_request = f"http://static-maps.yandex.ru/1.x/?ll={coords[0]},{coords[1]}&spn={scale},{scale}&l=map"
 
 response = requests.get(map_request)
@@ -16,11 +18,40 @@ if not response:
 map_file = "map.png"
 with open(map_file, "wb") as file:
     file.write(response.content)
+
 pygame.init()
 screen = pygame.display.set_mode((600, 450))
-screen.blit(pygame.image.load(map_file), (0, 0))
-pygame.display.flip()
-while pygame.event.wait().type != pygame.QUIT:
-    pass
+clock = pygame.time.Clock()
+running = True
+
+while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_PAGEUP:
+                scale *= zoom_in_factor
+            elif event.key == pygame.K_PAGEDOWN:
+                scale /= zoom_out_factor
+
+            if scale < 0.0001:
+                scale = 0.0001
+            elif scale > 100:
+                scale = 100
+
+            map_request = f"http://static-maps.yandex.ru/1.x/?ll={coords[0]},{coords[1]}&spn={scale},{scale}&l={map_type}"
+            response = requests.get(map_request)
+            if not response:
+                print("Ошибка выполнения запроса:")
+                print(map_request)
+                print("Http статус:", response.status_code, "(", response.reason, ")")
+                sys.exit(1)
+            with open(map_file, "wb") as file:
+                file.write(response.content)
+
+    screen.blit(pygame.image.load(map_file), (0, 0))
+    pygame.display.flip()
+    clock.tick(60)
+
 pygame.quit()
 os.remove(map_file)
