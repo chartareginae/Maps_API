@@ -1,8 +1,24 @@
+import os
+import pygame
+import requests
+import sys
+
+def switch_map_type():
+    global map_type, map_index
+    map_index = (map_index + 1) % len(map_types)
+    map_type = map_types[map_index]
+
+map_type = "map"
+map_types = ["map", "sat", "sat,skl"]
+map_index = 0
+
+switch_map_type()
+
 coords = input("Введите координаты (широта и долгота через пробел): ").split()
 scale = float(input("Введите коэффициент масштабирования: "))
 zoom_in_factor = float(input("Введите коэффициент увеличения масштаба: "))
 zoom_out_factor = float(input("Введите коэффициент уменьшения масштаба: "))
-map_request = f"http://static-maps.yandex.ru/1.x/?ll={coords[0]},{coords[1]}&spn={scale},{scale}&l=map"
+map_request = f"http://static-maps.yandex.ru/1.x/?ll={coords[0]},{coords[1]}&spn={scale},{scale}&l={map_type}"
 
 response = requests.get(map_request)
 if not response:
@@ -29,34 +45,37 @@ while running:
                 scale *= zoom_in_factor
             elif event.key == pygame.K_PAGEDOWN:
                 scale /= zoom_out_factor
-
+            elif event.key == pygame.K_t:
+                switch_map_type()
+            else:
+                flag = True
+                li = event.key
             if scale < 0.0001:
                 scale = 0.0001
-            elif scale > 100:
-                scale = 100
-            flag = True
-            li = event.key
-            if event.type == pygame.KEYUP:
-                flag = False
-        if flag:
-            if li == pygame.K_RIGHT:
-                coords[0] = str(float(coords[0]) + 0.05 % 180)
-            if li == pygame.K_LEFT:
-                coords[0] = str(float(coords[0]) - 0.05 % 180)
-            if li == pygame.K_UP:
-                coords[1] = str(float(coords[1]) + 0.05 % 90)
-            if li == pygame.K_DOWN:
-                coords[1] = str(float(coords[1]) - 0.05 % 90)
+            elif scale > 50:
+                scale = 50
 
-            map_request = f"http://static-maps.yandex.ru/1.x/?ll={coords[0]},{coords[1]}&spn={scale},{scale}&l=map"
-            response = requests.get(map_request)
-            if not response:
-                print("Ошибка выполнения запроса:")
-                print(map_request)
-                print("Http статус:", response.status_code, "(", response.reason, ")")
-                sys.exit(1)
-            with open(map_file, "wb") as file:
-                file.write(response.content)
+        if event.type == pygame.KEYUP:
+            flag = False
+    if flag:
+        if li == pygame.K_RIGHT:
+            coords[0] = str(float(coords[0]) + 0.05 % 180)
+        if li == pygame.K_LEFT:
+            coords[0] = str(float(coords[0]) - 0.05 % 180)
+        if li == pygame.K_UP:
+            coords[1] = str(float(coords[1]) + 0.05 % 90)
+        if li == pygame.K_DOWN:
+            coords[1] = str(float(coords[1]) - 0.05 % 90)
+
+    map_request = f"http://static-maps.yandex.ru/1.x/?ll={coords[0]},{coords[1]}&spn={scale},{scale}&l={map_type}"
+    response = requests.get(map_request)
+    if not response:
+        print("Ошибка выполнения запроса:")
+        print(map_request)
+        print("Http статус:", response.status_code, "(", response.reason, ")")
+        sys.exit(1)
+    with open(map_file, "wb") as file:
+        file.write(response.content)
 
     screen.blit(pygame.image.load(map_file), (0, 0))
     pygame.display.flip()
