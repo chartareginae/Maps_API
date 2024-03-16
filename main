@@ -29,7 +29,7 @@ if not response:
 map_file = "map.png"
 with open(map_file, "wb") as file:
     file.write(response.content)
-
+f1 = pygame.font.Font(None, 32)
 pygame.init()
 screen = pygame.display.set_mode((600, 450))
 clock = pygame.time.Clock()
@@ -54,6 +54,10 @@ while running:
                 scale = 0.0001
             elif scale > 50:
                 scale = 50
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                x, y = pygame.mouse.get_pos()
+                if 0 <= x <= 173 and 0 <= y <= 30:
+                    coords = input("Введите координаты (широта и долгота через пробел): ").split()
 
         if event.type == pygame.KEYUP:
             flag = False
@@ -76,8 +80,12 @@ while running:
         sys.exit(1)
     with open(map_file, "wb") as file:
         file.write(response.content)
-
+    
     screen.blit(pygame.image.load(map_file), (0, 0))
+    pygame.draw.rect(screen, (255, 0, 0), (0, 0, 173, 30))
+    text1 = f1.render('Поменять место', True,
+                      (255, 255, 255))
+    screen.blit(text1, (0, 5))
     pygame.display.flip()
     clock.tick(60)
 
