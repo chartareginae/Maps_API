@@ -3,10 +3,37 @@ import pygame
 import requests
 import sys
 
+
 def switch_map_type():
     global map_type, map_index
     map_index = (map_index + 1) % len(map_types)
     map_type = map_types[map_index]
+
+
+def req(coords, is_place=False):
+    if is_place:
+        link = f"http://static-maps.yandex.ru/1.x/?ll={coords[0]},{coords[1]}&spn={scale},{scale}&l={map_type}&pt={coords[0]},{coords[1]},pm2dom"
+    else:
+        link = f"http://static-maps.yandex.ru/1.x/?ll={coords[0]},{coords[1]}&spn={scale},{scale}&l={map_type}"
+    response = requests.get(link)
+    if not response:
+        print("Ошибка выполнения запроса:")
+        print(link)
+        print("Http статус:", response.status_code, "(", response.reason, ")")
+        sys.exit(1)
+    map_file = "map.png"
+    with open(map_file, "wb") as file:
+        file.write(response.content)
+    return map_file
+
+
+def get_coords(place):
+    resp = requests.get(f"http://geocode-maps.yandex.ru/1.x/?apikey=40d1649f-0493-4b70-98ba-98533de7710b&geocode={place}&format=json")
+    resp = resp.json()
+    toponym = resp["response"]["GeoObjectCollection"]["featureMember"][0]["GeoObject"]
+    toponym_coodrinates = toponym["Point"]["pos"].split()
+    return toponym_coodrinates
+
 
 map_type = "map"
 map_types = ["map", "sat", "sat,skl"]
@@ -18,23 +45,14 @@ coords = input("Введите координаты (широта и долго�
 scale = float(input("Введите коэффициент масштабирования: "))
 zoom_in_factor = float(input("Введите коэффициент увеличения масштаба: "))
 zoom_out_factor = float(input("Введите коэффициент уменьшения масштаба: "))
-map_request = f"http://static-maps.yandex.ru/1.x/?ll={coords[0]},{coords[1]}&spn={scale},{scale}&l={map_type}"
+map_file = req(coords)
 
-response = requests.get(map_request)
-if not response:
-    print("Ошибка выполнения запроса:")
-    print(map_request)
-    print("Http статус:", response.status_code, "(", response.reason, ")")
-    sys.exit(1)
-map_file = "map.png"
-with open(map_file, "wb") as file:
-    file.write(response.content)
-f1 = pygame.font.Font(None, 32)
 pygame.init()
 screen = pygame.display.set_mode((600, 450))
 clock = pygame.time.Clock()
 running = True
 flag = False
+flagg = False
 li = None
 while running:
     for event in pygame.event.get():
@@ -54,11 +72,11 @@ while running:
                 scale = 0.0001
             elif scale > 50:
                 scale = 50
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                x, y = pygame.mouse.get_pos()
-                if 0 <= x <= 173 and 0 <= y <= 30:
-                    coords = input("Введите координаты (широта и долгота через пробел): ").split()
-
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            place = input('Введите новое место:')
+            coords = get_coords(place)
+            req(coords, is_place=True)
+            flagg = True
         if event.type == pygame.KEYUP:
             flag = False
     if flag:
@@ -71,21 +89,13 @@ while running:
         if li == pygame.K_DOWN:
             coords[1] = str(float(coords[1]) - 0.05 % 90)
 
-    map_request = f"http://static-maps.yandex.ru/1.x/?ll={coords[0]},{coords[1]}&spn={scale},{scale}&l={map_type}"
-    response = requests.get(map_request)
-    if not response:
-        print("Ошибка выполнения запроса:")
-        print(map_request)
-        print("Http статус:", response.status_code, "(", response.reason, ")")
-        sys.exit(1)
-    with open(map_file, "wb") as file:
-        file.write(response.content)
-    
+    map_file = req(coords, is_place=flagg)
     screen.blit(pygame.image.load(map_file), (0, 0))
-    pygame.draw.rect(screen, (255, 0, 0), (0, 0, 173, 30))
-    text1 = f1.render('Поменять место', True,
+    pygame.draw.rect(screen, (255, 0, 0), (0, 0, 190, 30))
+    f1 = pygame.font.Font(None, 36)
+    text1 = f1.render('изменить место', True,
                       (255, 255, 255))
-    screen.blit(text1, (0, 5))
+    screen.blit(text1, (2, 2))
     pygame.display.flip()
     clock.tick(60)
 
