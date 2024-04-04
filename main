@@ -73,10 +73,12 @@ while running:
             elif scale > 50:
                 scale = 50
         if event.type == pygame.MOUSEBUTTONDOWN:
-            place = input('Введите новое место:')
-            coords = get_coords(place)
-            req(coords, is_place=True)
-            flagg = True
+            x, y = event.pos
+            if x <= 190 and y <= 30:
+                place = input('Введите новое место:')
+                coords = get_coords(place)
+                req(coords, is_place=True)
+                flagg = True
         if event.type == pygame.KEYUP:
             flag = False
     if flag:
