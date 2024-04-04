@@ -11,10 +11,14 @@ def switch_map_type():
 
 
 def req(coords, is_place=False):
+    global points
     if is_place:
-        link = f"http://static-maps.yandex.ru/1.x/?ll={coords[0]},{coords[1]}&spn={scale},{scale}&l={map_type}&pt={coords[0]},{coords[1]},pm2dom"
-    else:
-        link = f"http://static-maps.yandex.ru/1.x/?ll={coords[0]},{coords[1]}&spn={scale},{scale}&l={map_type}"
+        if not points:
+            points += '&pt='
+        else:
+            points += '~'
+        points += f'{coords[0]},{coords[1]},pm2dom'
+    link = f"http://static-maps.yandex.ru/1.x/?ll={coords[0]},{coords[1]}&spn={scale},{scale}&l={map_type}{points}"
     response = requests.get(link)
     if not response:
         print("Ошибка выполнения запроса:")
@@ -38,6 +42,7 @@ def get_coords(place):
 map_type = "map"
 map_types = ["map", "sat", "sat,skl"]
 map_index = 0
+points = ''
 
 switch_map_type()
 
@@ -52,7 +57,6 @@ screen = pygame.display.set_mode((600, 450))
 clock = pygame.time.Clock()
 running = True
 flag = False
-flagg = False
 li = None
 while running:
     for event in pygame.event.get():
@@ -78,7 +82,6 @@ while running:
                 place = input('Введите новое место:')
                 coords = get_coords(place)
                 req(coords, is_place=True)
-                flagg = True
         if event.type == pygame.KEYUP:
             flag = False
     if flag:
@@ -91,7 +94,7 @@ while running:
         if li == pygame.K_DOWN:
             coords[1] = str(float(coords[1]) - 0.05 % 90)
 
-    map_file = req(coords, is_place=flagg)
+    map_file = req(coords)
     screen.blit(pygame.image.load(map_file), (0, 0))
     pygame.draw.rect(screen, (255, 0, 0), (0, 0, 190, 30))
     f1 = pygame.font.Font(None, 36)
